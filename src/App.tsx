@@ -45,9 +45,7 @@ export default function App() {
   // --- 1. GESTIÓN DE CÁMARA (HÍBRIDA) ---
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } // Aumentamos la resolución de captura
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
@@ -141,6 +139,7 @@ export default function App() {
     if (!code) return;
     console.log("Procesando:", code);
     
+    // Scan & Go: Siempre intentar identificar el código
     if (appState === STATE.WAITING || appState === STATE.RESULT || appState === STATE.USER_DETECTED) {
         fetchUser(code);
     } else if (appState === STATE.NEW_USER_MODE) {
@@ -413,7 +412,7 @@ export default function App() {
       )}
 
       <div className="absolute top-4 left-4 flex items-center gap-4 opacity-80">
-        <div className="flex items-center gap-2"><Scan className="w-6 h-6" /><span className="font-mono text-sm">GATEKEEPER v17.0</span></div>
+        <div className="flex items-center gap-2"><Scan className="w-6 h-6" /><span className="font-mono text-sm">GATEKEEPER v18.0</span></div>
       </div>
 
       {appState === STATE.WAITING && (
@@ -447,12 +446,16 @@ export default function App() {
                               <button onClick={() => { setGeneratedCodeData({ id: currentUser.cedula, type: 'BARCODE' }); setAppState(STATE.SHOW_CODE); }} className="bg-emerald-900 hover:bg-emerald-800 text-emerald-200 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border border-emerald-700"><Barcode className="w-4 h-4" /> GENERAR BARRAS (PERSONAL)</button>
                           </div>
                           <h4 className="font-bold text-slate-400 mb-3 text-sm uppercase tracking-wider">Equipos Registrados</h4>
-                          {currentAssets.map((asset, index) => (
-                              <div key={index} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
-                                  <div><p className="font-bold text-white">{String(asset.descripcion)}</p><p className="text-xs text-slate-500 font-mono">ID: {String(asset.id_activo)}</p></div>
-                                  <button onClick={() => { setGeneratedCodeData({ id: asset.id_activo, type: 'QR' }); setAppState(STATE.SHOW_CODE); }} className="bg-blue-900 hover:bg-blue-800 text-blue-200 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border border-slate-600"><QrCode className="w-4 h-4" /> VER QR EQUIPO</button>
+                          {currentAssets.length > 0 ? (
+                              <div className="grid gap-3">
+                                  {currentAssets.map((asset, index) => (
+                                      <div key={index} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
+                                          <div><p className="font-bold text-white">{String(asset.descripcion)}</p><p className="text-xs text-slate-500 font-mono">ID: {String(asset.id_activo)}</p></div>
+                                          <button onClick={() => { setGeneratedCodeData({ id: asset.id_activo, type: 'QR' }); setAppState(STATE.SHOW_CODE); }} className="bg-blue-900 hover:bg-blue-800 text-blue-200 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border border-slate-600"><QrCode className="w-4 h-4" /> VER QR EQUIPO</button>
+                                      </div>
+                                  ))}
                               </div>
-                          ))}
+                          ) : (<div className="text-center p-8 border-2 border-dashed border-slate-700 rounded-xl text-slate-500"><Laptop className="w-8 h-8 mx-auto mb-2 opacity-50" /><p>No tiene equipos.</p></div>)}
                           <button onClick={() => { setHasLaptop(true); setNewUserForm({ name: String(currentUser.nombre), assetDesc: '', assetId: '' }); setAppState(STATE.NEW_USER_MODE); }} className="w-full mt-6 py-3 border border-dashed border-slate-600 rounded-xl text-slate-400 hover:text-white hover:border-slate-400 hover:bg-slate-800 flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> Registrar Nuevo Equipo</button>
                       </div>
                   ) : (<div className="h-full flex flex-col items-center justify-center text-slate-600"><p>Ingrese cédula para gestionar.</p></div>)}
@@ -473,7 +476,7 @@ export default function App() {
           <div className="space-y-6 text-center">
             <h3 className="text-xl font-bold text-white">¿El usuario trae equipo?</h3>
             <div className="bg-slate-700/50 p-6 rounded-xl border border-slate-600">
-                <Laptop className="w-10 h-10 mx-auto text-cyan-400 mb-2" /><p className="text-cyan-3d00 font-bold mb-4">SÍ TRAE PORTÁTIL</p>
+                <Laptop className="w-10 h-10 mx-auto text-cyan-400 mb-2" /><p className="text-cyan-300 font-bold mb-4">SÍ TRAE PORTÁTIL</p>
                 <button onClick={() => { startCamera(); setShowCamera(true); }} className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 mx-auto border border-slate-500"><Camera className="w-5 h-5" /> ESCANEAR QR/BARRAS</button>
             </div>
             <button onClick={handleManualEntry} className="w-full py-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-slate-200 flex items-center justify-center gap-2 border border-slate-500"><UserCheck className="w-5 h-5" /> ENTRADA PEATONAL (SIN EQUIPO)</button>
