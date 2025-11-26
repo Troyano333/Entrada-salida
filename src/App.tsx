@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Scan, User, Laptop, CheckCircle, AlertTriangle, XCircle, Plus, Loader2, MonitorOff, LogIn, LogOut, UserCheck, QrCode, ArrowRight, Smartphone, Download, FileText, Camera, X, Keyboard, Grid, Barcode, Zap } from 'lucide-react';
+import { Scan, User, Laptop, CheckCircle, AlertTriangle, XCircle, Plus, Loader2, LogIn, LogOut, UserCheck, QrCode, ArrowRight, Smartphone, Download, FileText, Camera, X, Keyboard, Grid, Barcode, Zap } from 'lucide-react';
 
 // --- CONFIGURACIÓN ---
 const API_URL = "https://script.google.com/macros/s/AKfycby3xgU6EeOrkirJAerQoL6G4w00yl9CGWwQt8p-wOdOR3gExR4n48k_K2FKl0cYzt-H/exec"; 
@@ -45,7 +45,9 @@ export default function App() {
   // --- 1. GESTIÓN DE CÁMARA (HÍBRIDA) ---
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
@@ -95,7 +97,7 @@ export default function App() {
         const formData = new FormData();
         formData.append('file', imageBlob);
         
-        // Enviamos el formato de códigos de barras MÁS USADO (Code 128)
+        // Hacemos el escaneo universal (QR, Code128, etc)
         formData.append('formats', 'qrcode,code128,ean13,code39'); 
 
         const response = await fetch(QR_READ_API, { method: 'POST', body: formData });
@@ -139,6 +141,7 @@ export default function App() {
     if (!code) return;
     console.log("Procesando:", code);
     
+    // Scan & Go: Siempre intentar identificar el código
     if (appState === STATE.WAITING || appState === STATE.RESULT || appState === STATE.USER_DETECTED) {
         fetchUser(code);
     } else if (appState === STATE.NEW_USER_MODE) {
@@ -336,7 +339,6 @@ export default function App() {
       }
   };
   
-  // URL del QR que se muestra en pantalla (codifica la URL de la imagen final)
   const screenQrUrl = generatedCodeData ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(getFinalImageUrl())}` : '';
 
   const handleDownloadCode = async () => {
@@ -411,7 +413,7 @@ export default function App() {
       )}
 
       <div className="absolute top-4 left-4 flex items-center gap-4 opacity-80">
-        <div className="flex items-center gap-2"><Scan className="w-6 h-6" /><span className="font-mono text-sm">GATEKEEPER v18.0</span></div>
+        <div className="flex items-center gap-2"><Scan className="w-6 h-6" /><span className="font-mono text-sm">GATEKEEPER v18.0 (Final)</span></div>
       </div>
 
       {appState === STATE.WAITING && (
