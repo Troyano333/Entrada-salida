@@ -94,6 +94,10 @@ export default function App() {
     try {
         const formData = new FormData();
         formData.append('file', imageBlob);
+        
+        // Hacemos el escaneo universal (QR, Code128, etc)
+        formData.append('formats', 'qrcode,code128,ean13,code39'); 
+
         const response = await fetch(QR_READ_API, { method: 'POST', body: formData });
         const data = await response.json();
         if (data && data[0]?.symbol?.[0]?.data) {
@@ -134,8 +138,6 @@ export default function App() {
   const processScanCode = (code: string) => {
     if (!code) return;
     console.log("Procesando:", code);
-    
-    // Scan & Go: Siempre intentar identificar el código
     if (appState === STATE.WAITING || appState === STATE.RESULT || appState === STATE.USER_DETECTED) {
         fetchUser(code);
     } else if (appState === STATE.NEW_USER_MODE) {
@@ -180,12 +182,13 @@ export default function App() {
     try {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('formats', 'qrcode,code128,ean13,code39'); 
         const response = await fetch(QR_READ_API, { method: 'POST', body: formData });
         const data = await response.json();
         if (data && data[0]?.symbol?.[0]?.data) {
             setIsScanning(false);
             processScanCode(data[0].symbol[0].data);
-        } else { setIsScanning(false); alert("No se detectó QR."); }
+        } else { setIsScanning(false); alert("No se detectó código."); }
     } catch (error) { setIsScanning(false); alert("Error analizando imagen."); }
     e.target.value = '';
   };
@@ -215,18 +218,14 @@ export default function App() {
             setAppState(STATE.DASHBOARD);
         } else {
             if (data.tipo === 'ACTIVO') {
-                // Opción 1: Escaneó código de portátil. Hacemos registro RÁPIDO.
                 await logMovement(currentMode, data.usuario.cedula, data.activo.id_activo, 'EXITOSO (SCAN&GO)', data.usuario.nombre);
                 showFeedback('success', `${currentMode} RÁPIDA: ${data.usuario.nombre} - ${data.activo.id_activo}`);
             } else {
-                 // Opción 2: Escaneó cédula/código de barras personal. 
-                 // Si el modo es SALIDA, registramos la salida PEATONAL de una vez.
                  if (currentMode === 'SALIDA') {
                      const assetIdForCycle = data.usuario.cedula; 
                      await logMovement('SALIDA', data.usuario.cedula, assetIdForCycle, 'EXITOSO (PEATONAL)', data.usuario.nombre);
                      showFeedback('success', `SALIDA PEATONAL RÁPIDA: ${data.usuario.nombre}`);
                  } else {
-                    // Si el modo es ENTRADA, mostramos la pantalla de "Trae equipo?"
                     setAppState(STATE.USER_DETECTED);
                  }
             }
